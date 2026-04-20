@@ -1,4 +1,4 @@
-import fitz
+import pymupdf
 import sys
 
 from matplotlib import text
@@ -20,35 +20,36 @@ def is_near_white(color, threshold=10):
     return r >= 255 - threshold and g >= 255 - threshold and b >= 255 - threshold
 
 def get_white_text(pdf_path):
-    doc = fitz.open(pdf_path)
+    doc = pymupdf.open(pdf_path)
     white_texts = {}
 
     for page_num in range(len(doc)):
         page = doc[page_num]
         page_dict = page.get_text("dict")
         blocks = page_dict["blocks"]
-        
-        font_list = page.get_fonts()
 
+        white_spans = []
         for block in blocks:
             if 'lines' in block:
                 for line in block["lines"]:
-                    has_white = False
                     for span in line["spans"]:
-                        # get color and text
                         color = span['color']
                         text = span['text']
-                        # is color white?
                         if is_near_white(color):
                             white_texts[page_num + 1] = white_texts.get(page_num + 1, []) + [text]
-                            # replace in the file with red text
-                            page.insert_text(
-                                span['origin'], 
-                                span['text'], 
-                                fontsize=span['size'], 
-                                fontname="helv",
-                                color=(1, 0, 0)
-                            )
+                            white_spans.append(span)
+                            page.add_redact_annot(pymupdf.Rect(span['bbox']))
+
+        if white_spans:
+            page.apply_redactions()
+            for span in white_spans:
+                page.insert_text(
+                    span['origin'],
+                    span['text'],
+                    fontsize=span['size'],
+                    fontname="helv",
+                    color=(1, 0, 0)
+                )
                             
                             
 
@@ -59,7 +60,7 @@ def get_white_text(pdf_path):
 
 
 def extract_metadata(pdf_path):
-    doc = fitz.open(pdf_path)
+    doc = pymupdf.open(pdf_path)
     metadata = doc.metadata
     doc.close()
     return metadata
