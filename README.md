@@ -1,5 +1,5 @@
 # LLM Trap Detection
-Pretty much dumps white text and metadata of a PDF file.
+Dumps any text that is close (or equal) to the background color. Also catches tiny text and rendering tricks.
 
 Might consider adding HTML and MD in the future.
 
