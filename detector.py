@@ -91,7 +91,7 @@ def detect_hidden(span, pix, page_rect, zoom):
     return None
 
 
-def get_hidden_text(pdf_path):
+def get_hidden_text(pdf_path, clean=False):
     doc = pymupdf.open(pdf_path)
     hidden_texts = {}
     matrix = pymupdf.Matrix(ZOOM, ZOOM)
@@ -126,17 +126,19 @@ def get_hidden_text(pdf_path):
 
         if hidden_spans:
             page.apply_redactions()
-            for span in hidden_spans:
-                page.insert_text(
-                    span['origin'],
-                    span['text'],
-                    fontsize=max(span['size'], 8),
-                    fontname="helv",
-                    color=(1, 0, 0)
-                )
+            if not clean:
+                for span in hidden_spans:
+                    page.insert_text(
+                        span['origin'],
+                        span['text'],
+                        fontsize=max(span['size'], 8),
+                        fontname="helv",
+                        color=(1, 0, 0)
+                    )
 
     if hidden_texts:
-        doc.save("modified_" + pdf_path)
+        prefix = "clean_" if clean else "modified_"
+        doc.save(prefix + pdf_path)
     doc.close()
     return hidden_texts
 
@@ -150,13 +152,17 @@ def extract_metadata(pdf_path):
 
 def main():
     global pdf_file
-    if len(sys.argv) != 2:
-        print("Usage: python detector.py <pdf_file>")
+    args = sys.argv[1:]
+    clean = "--clean" in args
+    args = [a for a in args if a != "--clean"]
+
+    if len(args) != 1:
+        print("Usage: python detector.py [--clean] <pdf_file>")
         return
 
-    file = sys.argv[1]
+    file = args[0]
 
-    hidden_text = get_hidden_text(file)
+    hidden_text = get_hidden_text(file, clean=clean)
     metadata = extract_metadata(file)
 
     if hidden_text:
