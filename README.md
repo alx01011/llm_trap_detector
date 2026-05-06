@@ -9,10 +9,7 @@ You need the python dependencies prior to running:
 
 Run using:
     `python detector.py <file.pdf>`
+ The detector is going to generate a new pdf file with the hidden text in red.
 
 You may also clean the file (remove hidden text):
     `python detector --clean <file.pdf>`
-
-It will report any white text found and the metadata of the file.
-
-It will also generate a new file with the hidden text, now in red.
